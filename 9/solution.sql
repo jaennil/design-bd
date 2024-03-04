@@ -158,15 +158,8 @@ JOIN (
 ) USING(flight_id);
 
 -- 17
-SELECT
-	aircraft_code,
-	COUNT(*) FILTER(WHERE fare_conditions='Business') OVER (
-		PARTITION BY aircraft_code
-	),
-	COUNT(*) FILTER(WHERE fare_conditions='Economy') OVER (
-		PARTITION BY aircraft_code
-	)
-FROM seats;
-
--- 18
-
+SELECT seat_no, passenger_name, fare_conditions
+FROM ticket_flights
+NATURAL JOIN tickets
+NATURAL JOIN boarding_passes
+WHERE flight_id = 2;
