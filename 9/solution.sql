@@ -118,3 +118,11 @@ FROM (
 NATURAL JOIN airports;
 
 -- 15
+SELECT departure_airport, departure_city, COUNT(*)
+FROM routes
+GROUP BY departure_city, departure_airport
+HAVING departure_airport IN (
+	SELECT airport_code
+	FROM airports
+	WHERE coordinates[0] > 150
+);
