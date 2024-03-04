@@ -106,6 +106,19 @@ WHERE NOT EXISTS (
 	AND city <> 'Moscow';
 
 -- 13
+SELECT
+	DISTINCT model,
+	COUNT(*) FILTER(WHERE fare_conditions='Business') OVER (
+		PARTITION BY aircraft_code
+	) business,
+	COUNT(*) FILTER(WHERE fare_conditions='Comfort') OVER (
+		PARTITION BY aircraft_code
+	) comfort,
+	COUNT(*) FILTER(WHERE fare_conditions='Economy') OVER (
+		PARTITION BY aircraft_code
+	) economy
+FROM seats
+NATURAL JOIN aircrafts;
 
 -- 14
 SELECT city, airport_code, airport_name
@@ -145,4 +158,15 @@ JOIN (
 ) USING(flight_id);
 
 -- 17
+SELECT
+	aircraft_code,
+	COUNT(*) FILTER(WHERE fare_conditions='Business') OVER (
+		PARTITION BY aircraft_code
+	),
+	COUNT(*) FILTER(WHERE fare_conditions='Economy') OVER (
+		PARTITION BY aircraft_code
+	)
+FROM seats;
+
+-- 18
 
