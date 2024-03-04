@@ -126,3 +126,23 @@ HAVING departure_airport IN (
 	FROM airports
 	WHERE coordinates[0] > 150
 );
+
+-- 16
+SELECT flight_id, passengers::numeric / seats_amount::numeric
+FROM
+(
+	SELECT flight_id, COUNT(seats) seats_amount
+	FROM flights
+	NATURAL JOIN aircrafts
+	NATURAL JOIN seats
+	GROUP BY flight_id
+)
+JOIN (
+	SELECT flight_id, COUNT(ticket_no) passengers
+	FROM flights
+	NATURAL JOIN ticket_flights
+	GROUP BY flight_id
+) USING(flight_id);
+
+-- 17
+
