@@ -163,3 +163,26 @@ FROM ticket_flights
 NATURAL JOIN tickets
 NATURAL JOIN boarding_passes
 WHERE flight_id = 2;
+
+-- 18
+CREATE OR REPLACE FUNCTION booking(book_no bookings.book_ref%type)
+	returns table (
+		book_ref bookings.book_ref%type,
+		book_date bookings.book_date%type,
+		total_amount bookings.total_amount%type
+	)
+	language plpgsql
+	AS
+	$$
+	begin
+		return query
+			SELECT bookings.book_ref, bookings.book_date, bookings.total_amount
+			FROM bookings
+			WHERE bookings.book_ref = book_no;
+	end;
+	$$
+;
+
+SELECT * FROM booking('000004');
+
+-- 19
