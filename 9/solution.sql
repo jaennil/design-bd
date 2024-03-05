@@ -306,7 +306,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 CREATE TRIGGER prevent_moscow_departure
-BEFORE INSERT ON ticket_flights
+BEFORE INSERT ON ticket_flights -- maybe better to use "INSTEAD OF INSERT" instead of "BOFERE INSERT"
 FOR EACH ROW
 EXECUTE FUNCTION moscow_departure_city();
 
