@@ -235,8 +235,61 @@ BEGIN
 	RAISE EXCEPTION 'route not found';
 END;
 $$;
--- 20
 
+CALL create_booking('Moscow', 'St. Petersburg', bookings.now()::DATE);
+-- 20
+CREATE OR REPLACE PROCEDURE add_passenger(p_book_ref bookings.book_ref%TYPE, p_name tickets.passenger_name%TYPE)
+LANGUAGE plpgsql
+AS $$
+DECLARE
+	v_flight_id flights.flight_id%TYPE;
+	aircraft_seats INT;
+	occupied_seats INT;
+	v_ticket_no tickets.ticket_no%TYPE;
+	v_passenger_id tickets.passenger_id%TYPE;
+BEGIN
+
+	SELECT flight_id
+	INTO v_flight_id
+	FROM bookings
+		NATURAL JOIN tickets
+		NATURAL JOIN ticket_flights
+	WHERE book_ref = p_book_ref
+	LIMIT 1;
+
+	SELECT COUNT(seat_no)
+	INTO aircraft_seats
+	FROM flights
+		NATURAL JOIN aircrafts
+		NATURAL JOIN seats
+	WHERE flight_id = v_flight_id;
+
+	SELECT COUNT(ticket_no)
+	INTO occupied_seats
+	FROM ticket_flights
+	WHERE flight_id = v_flight_id;
+
+	IF aircraft_seats <= occupied_seats THEN
+		RAISE EXCEPTION 'no seats available';
+		RETURN;
+	END IF;
+
+	SELECT concat('_', (SELECT LPAD(RIGHT(COUNT(*)::TEXT, 12), 12, '0') FROM tickets))
+	INTO v_ticket_no;
+
+	SELECT concat('_', (SELECT LPAD(RIGHT(COUNT(*)::TEXT, 19), 19, '0') FROM tickets))
+	INTO v_passenger_id;
+
+	INSERT INTO tickets(ticket_no, book_ref, passenger_id, passenger_name)
+	VALUES (v_ticket_no, p_book_ref, v_passenger_id, p_name);
+
+END;
+$$;
+
+CALL add_passenger('000004', 'DUBROVSKIH NIKITA EVGENEVICH');
+
+\x
+SELECT * FROM tickets WHERE passenger_name ~ 'DUBROVSKIH';
 
 -- 21
 
