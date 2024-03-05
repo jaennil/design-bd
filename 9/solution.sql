@@ -186,3 +186,57 @@ CREATE OR REPLACE FUNCTION booking(book_no bookings.book_ref%type)
 SELECT * FROM booking('000004');
 
 -- 19
+CREATE OR REPLACE PROCEDURE create_booking(source_city airports.city%TYPE, destination_city airports.city%TYPE, date DATE)
+LANGUAGE plpgsql
+AS $$
+DECLARE
+	flight_id INT;
+	new_book_ref VARCHAR(6);
+BEGIN
+		
+	SELECT INTO new_book_ref concat('_', (SELECT COUNT(*)%100000 FROM bookings));
+
+	SELECT f1.flight_id
+	INTO flight_id
+	FROM flights_v f1, flights_v f2
+	WHERE f1.departure_city = destination_city AND
+		f1.arrival_city = f2.departure_city AND
+		f2.arrival_city = destination_city AND
+		date_trunc('day', f1.scheduled_departure) = date AND
+		f2.scheduled_departure >= f1.scheduled_arrival
+	ORDER BY f1.scheduled_departure, f2.scheduled_departure
+	LIMIT 1;
+
+	IF flight_id IS NOT NULL THEN
+		INSERT INTO bookings(book_ref, book_date, total_amount)
+		VALUES (new_book_ref, bookings.now(), 0);
+		RETURN;
+	END IF;
+
+	SELECT f1.flight_id
+	INTO flight_id
+    FROM flights_v f1, flights_v f2, flights_v f3
+    WHERE f1.departure_city = source_city AND
+		f1.arrival_city = f2.departure_city AND
+		f2.arrival_city = f3.departure_city AND
+		f3.arrival_city = destination_city AND
+		date_trunc('day', f1.scheduled_departure = date) AND
+		f2.scheduled_departure >= f1.scheduled_arrival AND
+		f3.scheduled_departure >= f2.scheduled_arrival
+    ORDER BY f1.scheduled_departure, f2.scheduled_departure, f3.scheduled_departure
+    LIMIT 1;
+	
+	IF flight_id IS NOT NULL THEN
+		INSERT INTO bookings(book_ref, book_date, total_amount)
+		VALUES (new_book_ref, bookings.now(), 0);
+		RETURN;
+	END IF;
+
+	RAISE EXCEPTION 'route not found';
+END;
+$$;
+-- 20
+
+
+-- 21
+
