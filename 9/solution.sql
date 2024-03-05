@@ -292,4 +292,60 @@ CALL add_passenger('000004', 'DUBROVSKIH NIKITA EVGENEVICH');
 SELECT * FROM tickets WHERE passenger_name ~ 'DUBROVSKIH';
 
 -- 21
+CREATE OR REPLACE FUNCTION moscow_departure_city()
+RETURNS TRIGGER AS $$
+BEGIN
+
+    IF (SELECT departure_city FROM flights_v WHERE flight_id = NEW.flight_id) = 'Moscow' THEN
+        RAISE EXCEPTION 'Departure from Moscow is not allowed.';
+    END IF;
+
+    RETURN NEW;
+
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER prevent_moscow_departure
+BEFORE INSERT ON ticket_flights
+FOR EACH ROW
+EXECUTE FUNCTION moscow_departure_city();
+
+-- NOT allowed
+INSERT INTO ticket_flights(ticket_no, flight_id, fare_conditions, amount)
+VALUES(
+	(
+		SELECT ticket_no
+		FROM tickets
+		WHERE passenger_name ~ 'DUBROVSKIH'
+		LIMIT 1
+	),
+	(
+		SELECT flight_id
+		FROM flights_v
+		WHERE departure_city = 'Moscow'
+		LIMIT 1
+	),
+	'Economy',
+	12345
+);
+
+-- allowed
+INSERT INTO ticket_flights(ticket_no, flight_id, fare_conditions, amount)
+VALUES(
+	(
+		SELECT ticket_no
+		FROM tickets
+		WHERE passenger_name ~ 'DUBROVSKIH'
+		LIMIT 1
+	),
+	(
+		SELECT flight_id
+		FROM flights_v
+		WHERE departure_city = 'St. Petersburg'
+		LIMIT 1
+	),
+	'Economy',
+	12345
+);
+
 
